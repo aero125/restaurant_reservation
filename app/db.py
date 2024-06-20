@@ -1,6 +1,5 @@
 import psycopg2
 from psycopg2 import pool
-from typing import Tuple, Optional
 
 class DatabaseManager:
     def __init__(self):
