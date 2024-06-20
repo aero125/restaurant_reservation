@@ -34,7 +34,7 @@ class Table(TableAdd):
 
 class ReservationAdd(BaseModel):
     user_id: int
-    table_number: int
+    table_id: int
     start_time: datetime = Field(default=datetime.now() + timedelta(hours=1))
     end_time: datetime = Field(default=datetime.now() + timedelta(hours=2))
 
