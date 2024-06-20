@@ -1,5 +1,6 @@
 from fastapi import FastAPI
-from app.api import users, promocodes, tables, reservations, test_data
+
+from app.api import promocodes, reservations, tables, test_data, users
 from app.init_db import init_db
 
 app = FastAPI()

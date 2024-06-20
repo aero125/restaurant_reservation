@@ -1,5 +1,7 @@
-from app.db import DatabaseManager
 from datetime import datetime, timedelta
+
+from app.db import DatabaseManager
+
 
 class DatabaseInitializer(DatabaseManager):
     def create_tables(self):
@@ -11,7 +13,8 @@ class DatabaseInitializer(DatabaseManager):
         self.create_partition(2024)
 
     def create_promocodes_table(self):
-        self.execute_query("""
+        self.execute_query(
+            """
             CREATE TABLE IF NOT EXISTS promocodes (
                 id SERIAL PRIMARY KEY,
                 code VARCHAR(10) UNIQUE NOT NULL,
@@ -19,10 +22,12 @@ class DatabaseInitializer(DatabaseManager):
                 expires_at TIMESTAMP NOT NULL,
                 discount SMALLINT NOT NULL
             );
-            """)
-        
+            """
+        )
+
     def create_users_table(self):
-        self.execute_query("""
+        self.execute_query(
+            """
             CREATE TABLE IF NOT EXISTS users (
                 id SERIAL PRIMARY KEY,
                 name VARCHAR(100) NOT NULL,
@@ -32,20 +37,24 @@ class DatabaseInitializer(DatabaseManager):
                 promocode_id INT REFERENCES promocodes(id) ON DELETE SET NULL,
                 balance NUMERIC(15, 2) NOT NULL DEFAULT 0.0
             );
-            """)
-        
+            """
+        )
+
     def create_tables_table(self):
-        self.execute_query("""
+        self.execute_query(
+            """
             CREATE TABLE IF NOT EXISTS tables (
                 id SERIAL PRIMARY KEY,
                 table_number INT UNIQUE NOT NULL,
                 price NUMERIC(15, 2) NOT NULL,
                 seats INT NOT NULL
             );
-            """)
-        
+            """
+        )
+
     def create_reservations_table(self):
-        self.execute_query("""
+        self.execute_query(
+            """
             CREATE TABLE IF NOT EXISTS reservations (
                 id SERIAL PRIMARY KEY,
                 user_id INT REFERENCES users(id) ON DELETE CASCADE,
@@ -54,10 +63,12 @@ class DatabaseInitializer(DatabaseManager):
                 end_time TIMESTAMP NOT NULL,
                 price NUMERIC(15, 2) NOT NULL
             );
-            """)
-        
+            """
+        )
+
     def create_reservations_completed_table(self):
-        self.execute_query("""
+        self.execute_query(
+            """
             CREATE TABLE IF NOT EXISTS reservations_completed (
                 id SERIAL,
                 user_id INT,
@@ -72,7 +83,8 @@ class DatabaseInitializer(DatabaseManager):
                 promocode_id INT,
                 PRIMARY KEY (id, start_time)
             ) PARTITION BY RANGE (start_time);
-            """)
+            """
+        )
 
     def create_partition(self, year):
         for month in range(1, 13):
@@ -81,12 +93,14 @@ class DatabaseInitializer(DatabaseManager):
             start_date_str = start_date.strftime("%Y-%m-%d")
             end_date_str = next_month.strftime("%Y-%m-%d")
             partition_name = f"reservations_completed_{year}{month:02d}"
-            
-            self.execute_query(f"""
+
+            self.execute_query(
+                f"""
                 CREATE TABLE IF NOT EXISTS {partition_name}
                 PARTITION OF reservations_completed
                 FOR VALUES FROM ('{start_date_str}') TO ('{end_date_str}');
-            """)
+            """
+            )
 
 
 def init_db():
