@@ -1,5 +1,5 @@
 from app.db import DatabaseManager
-
+from datetime import datetime, timedelta
 
 class DatabaseInitializer(DatabaseManager):
     def create_tables(self):
@@ -8,6 +8,7 @@ class DatabaseInitializer(DatabaseManager):
         self.create_tables_table()
         self.create_reservations_table()
         self.create_reservations_completed_table()
+        self.create_partition(2024)
 
     def create_promocodes_table(self):
         self.execute_query("""
@@ -58,7 +59,7 @@ class DatabaseInitializer(DatabaseManager):
     def create_reservations_completed_table(self):
         self.execute_query("""
             CREATE TABLE IF NOT EXISTS reservations_completed (
-                id SERIAL PRIMARY KEY,
+                id SERIAL,
                 user_id INT,
                 table_id INT,
                 start_time TIMESTAMP NOT NULL,
@@ -68,12 +69,25 @@ class DatabaseInitializer(DatabaseManager):
                 age SMALLINT NOT NULL,
                 email VARCHAR(100) NOT NULL,
                 phone VARCHAR(20),
-                promocode_id INT
-            );
+                promocode_id INT,
+                PRIMARY KEY (id, start_time)
+            ) PARTITION BY RANGE (start_time);
             """)
-        
-        self.execute_query("CREATE INDEX IF NOT EXISTS idx_start_time ON reservations_completed (start_time);")
-        self.execute_query("CREATE INDEX IF NOT EXISTS idx_end_time ON reservations_completed (start_time);")
+
+    def create_partition(self, year):
+        for month in range(1, 13):
+            start_date = datetime(year, month, 1)
+            next_month = (start_date.replace(day=28) + timedelta(days=4)).replace(day=1)
+            start_date_str = start_date.strftime("%Y-%m-%d")
+            end_date_str = next_month.strftime("%Y-%m-%d")
+            partition_name = f"reservations_completed_{year}{month:02d}"
+            
+            self.execute_query(f"""
+                CREATE TABLE IF NOT EXISTS {partition_name}
+                PARTITION OF reservations_completed
+                FOR VALUES FROM ('{start_date_str}') TO ('{end_date_str}');
+            """)
+
 
 def init_db():
     db_initializer = DatabaseInitializer()
